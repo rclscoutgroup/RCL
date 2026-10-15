@@ -1110,19 +1110,29 @@
             const cont = document.getElementById("cajaDirectorio"); cont.innerHTML = "";
             const filtro = (document.getElementById("buscarAnalista")?.value || "").toLowerCase();
 
-            directorioGlobal.filter(u => `${u.nombre} ${u.rol} ${u.club}`.toLowerCase().includes(filtro)).forEach(usr => {
+            directorioGlobal.forEach((usr, index) => {
+                if (!`${usr.nombre} ${usr.rol} ${usr.club}`.toLowerCase().includes(filtro)) return;
+                
                 const badgesHtml = (usr.insignias || []).map(b => `<span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${b.color}">${b.icono} ${b.nombre}</span>`).join("");
-                cont.innerHTML += `<div onclick="abrirPerfilAnalista('${usr.id}')" class="bg-white border border-slate-200 p-5 rounded-xl shadow-sm text-center hover:border-blue-500 hover:shadow-md transition cursor-pointer flex flex-col justify-between">
+                const idSeguro = (usr.id !== undefined && usr.id !== "") ? usr.id : usr.nombre;
+                const numInformes = usr.total_informes !== undefined 
+                    ? usr.total_informes 
+                    : mercadoGlobal.filter(i => String(i.ID_Usuario).trim() === String(usr.id).trim() || String(i.Nombre_Autor).trim() === String(usr.nombre).trim()).length;
+
+                cont.innerHTML += `<div onclick="abrirPerfilAnalista('${idSeguro}', ${index})" class="bg-white border border-slate-200 p-5 rounded-xl shadow-sm text-center hover:border-blue-500 hover:shadow-md transition cursor-pointer flex flex-col justify-between">
                     <div>
-                        <div class="w-14 h-14 bg-slate-900 text-white rounded-full mx-auto mb-3 flex items-center justify-center text-lg font-black">${usr.nombre.charAt(0)}</div>
+                        <div class="w-14 h-14 bg-slate-900 text-white rounded-full mx-auto mb-3 flex items-center justify-center text-lg font-black">${String(usr.nombre || 'A').charAt(0)}</div>
                         <h3 class="font-black text-slate-900 text-base">${usr.nombre}</h3>
-                        <p class="text-[11px] text-emerald-600 font-black uppercase">${usr.rol} • NVL ${usr.nivel}</p>
-                        <p class="text-xs text-slate-500 mt-0.5 mb-3">${usr.club}</p>
+                        <p class="text-[11px] text-emerald-600 font-black uppercase">${usr.rol} • NVL ${usr.nivel || 1}</p>
+                        <p class="text-xs text-slate-500 mt-0.5 mb-3">${usr.club || 'RCL Scout Network'}</p>
                         <div class="flex flex-wrap justify-center gap-1 mb-4">${badgesHtml || '<span class="text-[10px] text-slate-400">Analista RCL</span>'}</div>
                     </div>
-                    <div class="border-t pt-3 flex justify-around text-xs font-bold text-slate-600">
-                        <span>📄 ${usr.total_informes} inf.</span>
-                        <span>★ ${usr.nota_media > 0 ? usr.nota_media : 'S/N'}</span>
+                    <div>
+                        <div class="border-t pt-3 flex justify-around text-xs font-bold text-slate-600">
+                            <span>📄 ${numInformes} inf.</span>
+                            <span>★ ${usr.nota_media > 0 ? usr.nota_media : 'S/N'}</span>
+                        </div>
+                        <button type="button" class="mt-3 w-full bg-slate-100 hover:bg-blue-600 hover:text-white text-slate-700 font-bold text-xs py-1.5 rounded-lg transition">Ver Perfil Completo</button>
                     </div>
                 </div>`;
             });
@@ -1133,15 +1143,16 @@
             const contCalidad = document.getElementById("tablaRankingCalidad");
             contXP.innerHTML = ""; contCalidad.innerHTML = "";
 
-            const porXP = directorioGlobal.slice().sort((a, b) => b.xp - a.xp).slice(0, 10);
+            const porXP = directorioGlobal.slice().sort((a, b) => (b.xp || 0) - (a.xp || 0)).slice(0, 10);
             porXP.forEach((u, idx) => {
                 const medalla = idx === 0 ? "🥇" : idx === 1 ? "🥈" : idx === 2 ? "🥉" : `#${idx + 1}`;
-                contXP.innerHTML += `<div onclick="abrirPerfilAnalista('${u.id}')" class="flex justify-between items-center p-3 bg-slate-50 hover:bg-blue-50 rounded-lg border cursor-pointer transition">
+                const idSeguro = (u.id !== undefined && u.id !== "") ? u.id : u.nombre;
+                contXP.innerHTML += `<div onclick="abrirPerfilAnalista('${idSeguro}')" class="flex justify-between items-center p-3 bg-slate-50 hover:bg-blue-50 rounded-lg border cursor-pointer transition">
                     <div class="flex items-center gap-3">
                         <span class="font-black text-sm w-6">${medalla}</span>
-                        <div><span class="font-black text-sm text-slate-800 block">${u.nombre}</span><span class="text-[10px] text-slate-500 uppercase font-bold">${u.rol} • ${u.club}</span></div>
+                        <div><span class="font-black text-sm text-slate-800 block">${u.nombre}</span><span class="text-[10px] text-slate-500 uppercase font-bold">${u.rol} • ${u.club || 'RCL'}</span></div>
                     </div>
-                    <span class="font-black text-blue-600 text-sm">${u.xp} XP (NVL ${u.nivel})</span>
+                    <span class="font-black text-blue-600 text-sm">${u.xp || 0} XP (NVL ${u.nivel || 1})</span>
                 </div>`;
             });
 
@@ -1151,10 +1162,11 @@
             } else {
                 porCalidad.forEach((u, idx) => {
                     const medalla = idx === 0 ? "🥇" : idx === 1 ? "🥈" : idx === 2 ? "🥉" : `#${idx + 1}`;
-                    contCalidad.innerHTML += `<div onclick="abrirPerfilAnalista('${u.id}')" class="flex justify-between items-center p-3 bg-slate-50 hover:bg-amber-50 rounded-lg border cursor-pointer transition">
+                    const idSeguro = (u.id !== undefined && u.id !== "") ? u.id : u.nombre;
+                    contCalidad.innerHTML += `<div onclick="abrirPerfilAnalista('${idSeguro}')" class="flex justify-between items-center p-3 bg-slate-50 hover:bg-amber-50 rounded-lg border cursor-pointer transition">
                         <div class="flex items-center gap-3">
                             <span class="font-black text-sm w-6">${medalla}</span>
-                            <div><span class="font-black text-sm text-slate-800 block">${u.nombre}</span><span class="text-[10px] text-slate-500 uppercase font-bold">${u.total_informes} informes publicados</span></div>
+                            <div><span class="font-black text-sm text-slate-800 block">${u.nombre}</span><span class="text-[10px] text-slate-500 uppercase font-bold">${u.total_informes || 0} informes publicados</span></div>
                         </div>
                         <span class="font-black text-amber-500 text-sm">★ ${u.nota_media} / 5</span>
                     </div>`;
@@ -1162,23 +1174,46 @@
             }
         }
 
-        function abrirPerfilAnalista(idUsuario) {
-            const usr = directorioGlobal.find(u => u.id === idUsuario);
+        function abrirPerfilAnalista(idUsuario, idxDirectorio) {
+            let usr = null;
+            if (idxDirectorio !== undefined && directorioGlobal[idxDirectorio]) {
+                usr = directorioGlobal[idxDirectorio];
+            } else {
+                usr = directorioGlobal.find(u => 
+                    (u.id !== undefined && String(u.id).trim() === String(idUsuario).trim()) || 
+                    (u.nombre && String(u.nombre).trim().toLowerCase() === String(idUsuario).trim().toLowerCase())
+                );
+            }
             if (!usr) return;
-            document.getElementById("mp-avatar").innerText = usr.nombre.charAt(0);
+
+            const infAnalista = mercadoGlobal.filter(i => 
+                (usr.id !== undefined && String(i.ID_Usuario).trim() === String(usr.id).trim()) ||
+                (i.Nombre_Autor && String(i.Nombre_Autor).trim().toLowerCase() === String(usr.nombre).trim().toLowerCase()) ||
+                (String(i.ID_Usuario).trim().toLowerCase() === String(usr.nombre).trim().toLowerCase())
+            );
+
+            const totalInf = usr.total_informes !== undefined ? usr.total_informes : infAnalista.length;
+            let notaMedia = usr.nota_media;
+            if (notaMedia === undefined) {
+                const conNota = infAnalista.filter(i => Number(i.Nota_Media) > 0);
+                notaMedia = conNota.length > 0 ? (conNota.reduce((acc, el) => acc + Number(el.Nota_Media), 0) / conNota.length).toFixed(2) : 0;
+            }
+
+            document.getElementById("mp-avatar").innerText = String(usr.nombre || "A").charAt(0);
             document.getElementById("mp-nombre").innerText = usr.nombre;
-            document.getElementById("mp-rol-club").innerText = `${usr.rol} | ${usr.club}`;
-            document.getElementById("mp-nivel").innerText = `NVL ${usr.nivel} (${usr.xp} XP)`;
-            document.getElementById("mp-total-inf").innerText = usr.total_informes;
-            document.getElementById("mp-nota").innerText = usr.nota_media > 0 ? `★ ${usr.nota_media}` : "S/N";
+            document.getElementById("mp-rol-club").innerText = `${usr.rol} | ${usr.club || 'RCL Scout Network'}`;
+            document.getElementById("mp-nivel").innerText = `NVL ${usr.nivel || 1} (${usr.xp !== undefined ? usr.xp : ((usr.nivel - 1) * 500)} XP)`;
+            document.getElementById("mp-total-inf").innerText = totalInf;
+            document.getElementById("mp-nota").innerText = Number(notaMedia) > 0 ? `★ ${notaMedia}` : "S/N";
             
             const btnContacto = document.getElementById("mp-contacto");
             if (usr.link) { btnContacto.href = usr.link; btnContacto.classList.remove("hidden"); }
             else { btnContacto.classList.add("hidden"); }
 
-            document.getElementById("mp-insignias").innerHTML = (usr.insignias || []).map(b => `<span class="text-[10px] font-bold px-2.5 py-0.5 rounded-full ${b.color}">${b.icono} ${b.nombre}</span>`).join("");
+            document.getElementById("mp-insignias").innerHTML = (usr.insignias && usr.insignias.length > 0)
+                ? usr.insignias.map(b => `<span class="text-[10px] font-bold px-2.5 py-0.5 rounded-full ${b.color}">${b.icono} ${b.nombre}</span>`).join("")
+                : `<span class="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-300">✔️ Analista Verificado RCL</span>`;
 
-            const infAnalista = mercadoGlobal.filter(i => i.ID_Usuario === idUsuario);
             const contInf = document.getElementById("mp-lista-informes");
             contInf.innerHTML = "";
             if (infAnalista.length === 0) {
