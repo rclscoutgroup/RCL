@@ -1,0 +1,1309 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RCL Scout Group - Global Scouting Ecosystem</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .tab-btn.active { border-bottom: 4px solid #2563eb; color: #2563eb; font-weight: 900; }
+        .custom-scroll::-webkit-scrollbar { height: 6px; width: 6px; }
+        .custom-scroll::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 4px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        
+        .star-btn { transition: all 0.2s; cursor: pointer; color: #cbd5e1; }
+        .star-btn:hover, .star-btn.active, .star-btn:hover ~ .star-btn { color: #f59e0b; }
+        .star-container { display: flex; flex-direction: row-reverse; justify-content: center; gap: 8px; font-size: 2.2rem; }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 font-sans min-h-screen">
+
+    <!-- ========================================== -->
+    <!-- PANTALLA DE LOGIN                          -->
+    <!-- ========================================== -->
+    <div id="login-screen" class="min-h-screen flex flex-col items-center justify-center px-4 bg-slate-950 relative">
+        <div class="max-w-md w-full bg-white rounded-2xl shadow-2xl p-8 text-center relative z-10 border border-slate-800">
+            <img src="https://github.com/rclscoutgroup/nuevoRCLdatabase/blob/main/RCL_Scout_Logo2.png?raw=true" alt="RCL Logo" class="h-28 mx-auto mb-5 drop-shadow-md">
+            <h1 class="text-2xl font-black text-slate-900 tracking-tight mb-1">RCL SCOUT GROUP</h1>
+            <p class="text-slate-500 text-xs uppercase tracking-widest font-bold mb-6">Global Scouting & Data Network</p>
+            
+            <form id="loginForm" class="space-y-4">
+                <input type="email" id="correo" placeholder="Correo electrónico corporativo" required class="w-full px-4 py-3 rounded-lg border border-slate-300 outline-none focus:border-blue-600 text-sm">
+                <input type="password" id="contrasena" placeholder="Contraseña" required class="w-full px-4 py-3 rounded-lg border border-slate-300 outline-none focus:border-blue-600 text-sm">
+                <div class="text-right">
+                    <button type="button" onclick="mostrarRecuperacion()" class="text-xs font-bold text-blue-600 hover:text-blue-800">¿Olvidaste tu contraseña?</button>
+                </div>
+                <button type="submit" id="btnLogin" class="w-full bg-blue-700 hover:bg-blue-800 text-white font-black py-3.5 rounded-lg shadow-lg transition text-sm">ENTRAR AL ECOSISTEMA</button>
+            </form>
+            
+            <form id="recuperarForm" class="space-y-4 hidden mt-2">
+                <p class="text-xs text-slate-600 mb-2">Introduce tu correo y te enviaremos tus credenciales.</p>
+                <input type="email" id="correoRecuperacion" placeholder="Tu correo electrónico" required class="w-full px-4 py-3 rounded-lg border outline-none focus:border-blue-600 text-sm">
+                <div class="flex gap-2">
+                    <button type="button" onclick="ocultarRecuperacion()" class="w-1/3 bg-slate-200 text-slate-700 font-bold py-3 rounded-lg text-sm">Volver</button>
+                    <button type="submit" id="btnRecuperar" class="w-2/3 bg-slate-900 text-white font-black py-3 rounded-lg text-sm">ENVIAR</button>
+                </div>
+            </form>
+            <p id="loginMensaje" class="text-sm mt-4 font-bold hidden"></p>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- DASHBOARD PRINCIPAL                        -->
+    <!-- ========================================== -->
+    <div id="dashboard-screen" class="hidden min-h-screen flex flex-col">
+        
+        <!-- CABECERA SUPERIOR -->
+        <header class="bg-slate-950 text-white px-4 py-3 shadow-lg flex justify-between items-center sticky top-0 z-40 border-b border-slate-800">
+            <div class="flex items-center gap-3">
+                <img src="https://github.com/rclscoutgroup/nuevoRCLdatabase/blob/main/RCL_Scout_Logo2.png?raw=true" class="h-11 drop-shadow">
+                <div class="hidden sm:block">
+                    <h1 class="text-base font-black tracking-tight leading-none">RCL SCOUT GROUP</h1>
+                    <span class="text-[10px] text-blue-400 font-bold uppercase tracking-widest">Portal Interno B2B</span>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-3">
+                <!-- Barra de Nivel y XP -->
+                <div class="bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-lg flex flex-col items-center w-36">
+                    <div class="flex justify-between w-full text-[10px] font-bold text-slate-400 mb-1">
+                        <span>NVL <span id="ui-nivel" class="text-white font-black">--</span></span>
+                        <span id="ui-xp-texto" class="text-blue-400">0 XP</span>
+                    </div>
+                    <div class="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                        <div id="ui-xp-bar" class="bg-gradient-to-r from-blue-500 to-indigo-400 h-full w-0 transition-all duration-500"></div>
+                    </div>
+                </div>
+                
+                <!-- Monedas RCL -->
+                <div class="bg-slate-900 border border-slate-800 px-3 py-2 rounded-lg flex items-center gap-1.5">
+                    <span>🪙</span><span id="ui-puntos" class="font-black text-amber-400 text-sm">--</span>
+                </div>
+
+                <!-- Campanita de Notificaciones -->
+                <div class="relative">
+                    <button onclick="toggleNotificaciones()" class="bg-slate-900 hover:bg-slate-800 border border-slate-800 p-2 rounded-lg relative transition">
+                        🔔
+                        <span id="badge-notif" class="hidden absolute -top-1 -right-1 bg-red-600 text-white text-[10px] font-black w-4 h-4 rounded-full flex items-center justify-center">0</span>
+                    </button>
+                    <!-- Dropdown Notificaciones -->
+                    <div id="panel-notificaciones" class="hidden absolute right-0 mt-2 w-80 bg-white text-slate-800 rounded-xl shadow-2xl border border-slate-200 z-50 overflow-hidden">
+                        <div class="bg-slate-900 text-white px-4 py-2.5 flex justify-between items-center">
+                            <span class="text-xs font-black uppercase">Centro de Alertas</span>
+                            <button onclick="marcarNotificacionesLeidas()" class="text-[10px] text-blue-400 hover:underline font-bold">Marcar leídas</button>
+                        </div>
+                        <div id="lista-notificaciones" class="max-h-72 overflow-y-auto divide-y divide-slate-100 custom-scroll p-2">
+                            <p class="text-xs text-slate-400 text-center py-4">Sin notificaciones nuevas</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Identidad Usuario -->
+                <div class="hidden md:block border-l border-slate-800 pl-3 text-right">
+                    <span id="ui-nombre" class="font-bold text-xs block text-slate-100">--</span>
+                    <span id="ui-rol" class="text-[10px] font-black text-emerald-400 uppercase">--</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- BARRA DE NAVEGACIÓN -->
+        <nav class="bg-white shadow-sm border-b border-slate-200 flex justify-start md:justify-center gap-1 md:gap-4 font-bold text-slate-500 sticky top-[61px] z-30 overflow-x-auto text-xs md:text-sm px-3">
+            <!-- Nivel 1 -->
+            <button onclick="cambiarTab('tab-mercado', this)" class="tab-btn active py-3.5 px-2.5 hover:text-blue-600 whitespace-nowrap">🌍 Mercado</button>
+            <button onclick="cambiarTab('tab-subir', this)" class="tab-btn py-3.5 px-2.5 hover:text-blue-600 whitespace-nowrap">📝 Subir Informe</button>
+            <button onclick="cambiarTab('tab-porras', this)" class="tab-btn py-3.5 px-2.5 hover:text-blue-600 whitespace-nowrap">⚽ Porras</button>
+            <button onclick="cambiarTab('tab-academia', this)" class="tab-btn py-3.5 px-2.5 hover:text-blue-600 whitespace-nowrap">🎓 Academia</button>
+            <button onclick="cambiarTab('tab-ranking', this)" class="tab-btn py-3.5 px-2.5 hover:text-blue-600 whitespace-nowrap">🏆 Ranking</button>
+            <button onclick="cambiarTab('tab-tablon', this)" class="tab-btn py-3.5 px-2.5 hover:text-blue-600 whitespace-nowrap">📌 Tablón</button>
+            <button onclick="cambiarTab('tab-portfolio', this)" class="tab-btn py-3.5 px-2.5 hover:text-red-600 whitespace-nowrap">📄 Mi Portfolio</button>
+            <!-- Nivel 2 (500 XP) -->
+            <button onclick="verificarNivel('tab-auditoria', 500, this)" class="tab-btn py-3.5 px-2.5 hover:text-blue-600 whitespace-nowrap">⚖️ Auditoría</button>
+            <!-- Nivel 3 (1000 XP) -->
+            <button onclick="verificarNivel('tab-encargos', 1000, this)" class="tab-btn py-3.5 px-2.5 hover:text-blue-600 whitespace-nowrap">🎯 Encargos</button>
+            <!-- Nivel 4 (1500 XP) -->
+            <button onclick="verificarNivel('tab-directorio', 1500, this)" class="tab-btn py-3.5 px-2.5 hover:text-blue-600 whitespace-nowrap">👥 Directorio</button>
+            <!-- Admin -->
+            <button id="nav-admin" onclick="cambiarTab('tab-admin', this)" class="tab-btn py-3.5 px-2.5 hover:text-emerald-600 whitespace-nowrap hidden text-emerald-700">🛡️ Dirección</button>
+        </nav>
+        
+        <main class="p-4 md:p-6 max-w-[1440px] mx-auto w-full flex-1">
+            
+            <!-- ========================================== -->
+            <!-- 1. MERCADO GLOBAL                          -->
+            <!-- ========================================== -->
+            <div id="tab-mercado" class="tab-content active">
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-6">
+                    <div class="bg-slate-900 text-white p-4 flex justify-between items-center">
+                        <div>
+                            <h2 class="font-black text-base">Repositorio Global de Informes</h2>
+                            <p class="text-xs text-slate-400">Informes estándar: 15 🪙 | Informes de Analistas Élite (NVL 5+): 20 🪙</p>
+                        </div>
+                        <button onclick="cargarMercado()" class="bg-blue-600 hover:bg-blue-700 px-3 py-1.5 rounded-lg text-xs font-bold transition">🔄 Actualizar</button>
+                    </div>
+                    <div class="p-4 bg-slate-50 grid grid-cols-1 md:grid-cols-4 gap-3 border-b border-slate-200">
+                        <select id="filtroTipo" class="px-3 py-2 border rounded-lg outline-none text-sm bg-white"><option value="">Todos los Tipos</option><option value="Scouting">Scouting Jugador</option><option value="Táctica">Análisis Táctico</option><option value="Datos">Análisis de Datos</option></select>
+                        <select id="filtroPais" class="px-3 py-2 border rounded-lg outline-none text-sm bg-white"><option value="">Todos los Países</option><option value="ESP">España (ESP)</option><option value="ENG">Inglaterra (ENG)</option><option value="ITA">Italia (ITA)</option><option value="CZE">Rep. Checa (CZE)</option><option value="SCO">Escocia (SCO)</option><option value="MEX">México (MEX)</option><option value="ARG">Argentina (ARG)</option><option value="INT">Internacional (INT)</option></select>
+                        <select id="filtroTier" class="px-3 py-2 border rounded-lg outline-none text-sm bg-white"><option value="">Todos los Tiers</option><option value="1">Tier 1 (Élite)</option><option value="2">Tier 2</option><option value="3">Tier 3</option><option value="4">Tier 4</option><option value="5">Tier 5</option></select>
+                        <input type="text" id="filtroTexto" placeholder="Buscar jugador, club, autor..." class="px-3 py-2 border rounded-lg outline-none text-sm bg-white">
+                    </div>
+                </div>
+                <div id="cajaResultadosMercado" class="grid grid-cols-1 md:grid-cols-3 gap-5"></div>
+            </div>
+
+            <!-- ========================================== -->
+            <!-- 2. SUBIR INFORME                           -->
+            <!-- ========================================== -->
+            <div id="tab-subir" class="tab-content">
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 max-w-4xl mx-auto">
+                    <div class="bg-slate-900 text-white p-4 rounded-t-xl"><h2 class="font-black">PUBLICAR NUEVO ANÁLISIS EN LA MATRIZ RCL</h2></div>
+                    <div class="p-6 md:p-8">
+                        <form id="formSubirInforme" class="space-y-5">
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                                <div><label class="block text-xs font-bold mb-1">TIPO DE INFORME</label><select id="f_tipo" required class="w-full p-2.5 border rounded-lg"><option value="Scouting">Scouting de Jugador</option><option value="Táctica">Análisis Táctico</option><option value="Datos">Análisis de Datos</option></select></div>
+                                <div class="md:col-span-2"><label class="block text-xs font-bold mb-1">OBJETIVO ANALIZADO (Jugador / Club / Competición)</label><input type="text" id="f_objetivo" required class="w-full p-2.5 border rounded-lg" placeholder="Ej: Lamine Yamal / Baník Ostrava"></div>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                                <div><label class="block text-xs font-bold mb-1">DETALLE TÉCNICO</label><input type="text" id="f_detalle" required class="w-full p-2.5 border rounded-lg" placeholder="Ej: Extremo Derecho / ABP"></div>
+                                <div><label class="block text-xs font-bold mb-1">HERRAMIENTAS</label><input type="text" id="f_herr" class="w-full p-2.5 border rounded-lg" placeholder="Wyscout, LongoMatch, Python..."></div>
+                                <div><label class="block text-xs font-bold mb-1">GRUPO / LIGA (Opcional)</label><input type="text" id="f_grupo" class="w-full p-2.5 border rounded-lg" placeholder="Ej: 1ª RFEF G2"></div>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-5 bg-slate-50 p-4 rounded-lg border">
+                                <div><label class="block text-xs font-bold mb-1">PAÍS</label><select id="f_pais" required class="w-full p-2.5 border rounded-lg bg-white"><option value="ESP">ESP - España</option><option value="ENG">ENG - Inglaterra</option><option value="ITA">ITA - Italia</option><option value="CZE">CZE - República Checa</option><option value="SCO">SCO - Escocia</option><option value="MEX">MEX - México</option><option value="ARG">ARG - Argentina</option><option value="INT">INT - Internacional</option></select></div>
+                                <div><label class="block text-xs font-bold mb-1">TIER COMPETITIVO</label><select id="f_tier" required class="w-full p-2.5 border rounded-lg bg-white"><option value="1">Tier 1 (1ª División / Élite)</option><option value="2">Tier 2 (2ª División)</option><option value="3">Tier 3 (1ª RFEF / Serie C)</option><option value="4">Tier 4 (2ª RFEF / Serie D)</option><option value="5">Tier 5 (3ª RFEF / Regional)</option></select></div>
+                            </div>
+                            <div class="border-t border-slate-200 pt-5">
+                                <label class="block text-xs font-black mb-2 text-blue-700 uppercase">ARCHIVO DEL INFORME (PDF)</label>
+                                <input type="file" id="f_pdf" accept=".pdf" required class="w-full border p-2.5 rounded-lg bg-slate-50 text-sm">
+                            </div>
+                            <div class="bg-indigo-50 border border-indigo-200 p-4 rounded-lg flex items-start gap-3">
+                                <input type="checkbox" id="f_tinder" class="mt-1 w-5 h-5 cursor-pointer" checked>
+                                <div>
+                                    <label for="f_tinder" class="font-bold text-indigo-900 text-sm cursor-pointer">Activar en Auditoría de Pares (Peer Review)</label>
+                                    <p class="text-xs text-indigo-700">Recibirás +5 🪙 por cada estrella que otros analistas otorguen a tu documento.</p>
+                                </div>
+                            </div>
+                            <button type="submit" id="btnSubir" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-black py-4 rounded-lg shadow-lg transition">SUBIR INFORME (+50 XP y +50 🪙)</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========================================== -->
+            <!-- 3. PORRAS DE PARTIDOS                      -->
+            <!-- ========================================== -->
+            <div id="tab-porras" class="tab-content">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                        <h2 class="text-lg font-black text-slate-800 mb-4 border-b pb-2">⚽ Porras de la Jornada (1 predicción por partido)</h2>
+                        <div id="cajaPorras" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                        <div class="flex justify-between items-center mb-4 border-b pb-2">
+                            <h2 class="text-base font-black text-slate-800">Mis Predicciones</h2>
+                            <span id="badgeWinRate" class="text-xs font-black bg-blue-100 text-blue-800 px-2.5 py-1 rounded-full">Acierto: --%</span>
+                        </div>
+                        <div id="historialPorras" class="space-y-2.5 max-h-[500px] overflow-y-auto custom-scroll"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========================================== -->
+            <!-- 4. ENCARGOS PROFESIONALES (MULTI-SOLICITUD)-->
+            <!-- ========================================== -->
+            <div id="tab-encargos" class="tab-content">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                        <div class="mb-4 border-b pb-3">
+                            <h2 class="text-lg font-black text-slate-800">🎯 Encargos de Clubes y Agencias</h2>
+                            <p class="text-xs text-slate-500">Postúlate a los encargos abiertos. Dirección seleccionará a los analistas asignados para cada proyecto.</p>
+                        </div>
+                        <div id="cajaEncargos" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                        <h2 class="text-base font-black text-slate-800 mb-4 border-b pb-2">Estado de Mis Solicitudes</h2>
+                        <div id="historialEncargos" class="space-y-2.5 max-h-[500px] overflow-y-auto custom-scroll"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========================================== -->
+            <!-- 5. ACADEMIA RCL (TIENDA DE CURSOS)         -->
+            <!-- ========================================== -->
+            <div id="tab-academia" class="tab-content">
+                <div class="bg-gradient-to-r from-slate-900 to-blue-950 text-white rounded-xl p-6 mb-6 shadow-md flex justify-between items-center">
+                    <div>
+                        <h2 class="text-xl font-black">🎓 RCL Academy & Recursos Exclusivos</h2>
+                        <p class="text-xs text-blue-200 mt-1">Canjea tus monedas RCL (🪙) por formación interna, masterclasses, plantillas de código y bases de datos.</p>
+                    </div>
+                </div>
+                <div id="cajaCursos" class="grid grid-cols-1 md:grid-cols-3 gap-6"></div>
+            </div>
+
+            <!-- ========================================== -->
+            <!-- 6. RANKING GLOBAL (LEADERBOARD)            -->
+            <!-- ========================================== -->
+            <div id="tab-ranking" class="tab-content">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                        <h2 class="text-lg font-black text-slate-800 mb-4 border-b pb-2">🏆 Top Analistas por Experiencia (XP)</h2>
+                        <div id="tablaRankingXP" class="space-y-2.5"></div>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                        <h2 class="text-lg font-black text-slate-800 mb-4 border-b pb-2">⭐ Top Calidad en Auditorías (Nota Media)</h2>
+                        <div id="tablaRankingCalidad" class="space-y-2.5"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========================================== -->
+            <!-- 7. AUDITORÍA DE PARES                      -->
+            <!-- ========================================== -->
+            <div id="tab-auditoria" class="tab-content">
+                <div class="max-w-2xl mx-auto bg-white rounded-xl shadow-lg border border-slate-200 overflow-hidden">
+                    <div class="bg-indigo-700 text-white p-5 text-center">
+                        <h2 class="font-black text-xl">AUDITORÍA CIEGA DE INFORMES</h2>
+                        <p class="text-xs text-indigo-200 mt-1">Evalúa con rigor técnico. Recompensa: +10 🪙 (+15 🪙 si eres Nivel Élite)</p>
+                    </div>
+                    <div class="p-8 text-center" id="tinderInicio">
+                        <button onclick="buscarInformeAuditoria()" id="btnBuscarTinder" class="bg-slate-900 text-white font-bold px-8 py-3.5 rounded-full shadow-lg hover:scale-105 transition">🔎 Asignar Informe para Auditar</button>
+                    </div>
+                    <div class="p-6 hidden flex-col items-center" id="tinderEvaluacion">
+                        <span class="bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full text-xs font-black mb-3 uppercase" id="t_tipo">Tipo</span>
+                        <h3 class="text-2xl font-black text-slate-800 mb-1 text-center" id="t_objetivo">Objetivo</h3>
+                        <p class="text-xs font-bold text-slate-500 mb-6" id="t_detalle">Detalle</p>
+                        <a id="t_enlace" href="#" target="_blank" class="w-full block bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-800 font-bold py-3.5 rounded-lg mb-6 text-center transition text-sm">📄 Abrir Documento PDF en Nueva Pestaña</a>
+                        <div class="w-full border-t border-slate-100 pt-5">
+                            <p class="font-bold text-slate-700 mb-3 text-center text-sm">Calificación Técnica (1 a 5 Estrellas)</p>
+                            <div class="star-container" id="cajaEstrellas">
+                                <span class="star-btn" data-val="5">★</span><span class="star-btn" data-val="4">★</span><span class="star-btn" data-val="3">★</span><span class="star-btn" data-val="2">★</span><span class="star-btn" data-val="1">★</span>
+                            </div>
+                            <button onclick="enviarEvaluacion()" id="btnVotar" class="w-full mt-5 bg-emerald-600 hover:bg-emerald-700 text-white font-black py-3 rounded-lg shadow hidden">CONFIRMAR AUDITORÍA</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========================================== -->
+            <!-- 8. TABLÓN COMUNITARIO                      -->
+            <!-- ========================================== -->
+            <div id="tab-tablon" class="tab-content">
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 h-[600px] flex flex-col">
+                    <h2 class="text-lg font-black text-slate-800 mb-4 border-b pb-2">📌 Tablón de Comunicación Interna</h2>
+                    <div id="contenedorMensajes" class="flex-1 overflow-y-auto bg-slate-50 rounded-lg border border-slate-200 p-4 space-y-3 custom-scroll"></div>
+                    <div class="mt-4 flex gap-2">
+                        <input type="text" id="inputMensaje" placeholder="Comparte un aviso, debate táctico o consulta con la red..." class="flex-1 px-4 py-2.5 border rounded-lg outline-none text-sm focus:border-blue-500">
+                        <button onclick="publicarTablon(event)" class="bg-slate-900 text-white font-bold px-6 py-2.5 rounded-lg shadow text-sm hover:bg-slate-800">Publicar</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========================================== -->
+            <!-- 9. DIRECTORIO DE ANALISTAS                 -->
+            <!-- ========================================== -->
+            <div id="tab-directorio" class="tab-content">
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 border-b pb-3 gap-3">
+                        <div>
+                            <h2 class="text-lg font-black text-slate-800">👥 Red Internacional de Analistas RCL</h2>
+                            <p class="text-xs text-slate-500">Haz clic en cualquier analista para abrir su Perfil Completo, ver sus insignias y desbloquear sus informes.</p>
+                        </div>
+                        <input type="text" id="buscarAnalista" oninput="renderizarDirectorio()" placeholder="Filtrar por nombre, rol o club..." class="px-3 py-2 border rounded-lg text-sm outline-none w-full md:w-64">
+                    </div>
+                    <div id="cajaDirectorio" class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-5"></div>
+                </div>
+            </div>
+
+            <!-- ========================================== -->
+            <!-- 10. PORTFOLIO PROFESIONAL VISUAL           -->
+            <!-- ========================================== -->
+            <div id="tab-portfolio" class="tab-content">
+                <div class="flex justify-between items-center mb-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                    <div>
+                        <h2 class="text-lg font-black text-slate-800">Dossier & Portfolio Profesional RCL</h2>
+                        <p class="text-xs text-slate-500">Vista previa oficial en vivo. Descárgalo en alta resolución para adjuntarlo a clubes y direcciones deportivas.</p>
+                    </div>
+                    <button onclick="descargarPortfolioPDF(event)" class="bg-red-600 hover:bg-red-700 text-white font-black px-5 py-3 rounded-lg shadow-lg text-xs md:text-sm transition flex items-center gap-2">
+                        📥 EXPORTAR PORTFOLIO PDF
+                    </button>
+                </div>
+
+                <!-- LIENZO DEL PORTFOLIO PARA EXPORTAR -->
+                <div class="overflow-x-auto pb-8">
+                    <div id="portfolio-canvas" class="bg-white w-[1050px] mx-auto rounded-xl shadow-xl border border-slate-200 overflow-hidden text-slate-800">
+                        <!-- Cabecera Corporativa -->
+                        <div class="bg-slate-950 text-white p-8 flex justify-between items-center border-b-4 border-blue-600">
+                            <div class="flex items-center gap-6">
+                                <img src="https://github.com/rclscoutgroup/nuevoRCLdatabase/blob/main/RCL_Scout_Logo2.png?raw=true" crossorigin="anonymous" class="h-24 drop-shadow-lg">
+                                <div>
+                                    <span class="text-[10px] font-black uppercase tracking-widest bg-blue-600 px-2.5 py-1 rounded text-white">RCL SCOUT GROUP VERIFIED ANALYST</span>
+                                    <h1 id="pf-nombre" class="text-3xl font-black mt-2 tracking-tight">NOMBRE DEL ANALISTA</h1>
+                                    <p id="pf-rol-club" class="text-sm text-blue-400 font-bold uppercase mt-0.5">Especialidad | Club Actual</p>
+                                </div>
+                            </div>
+                            <div class="text-right bg-slate-900 p-4 rounded-xl border border-slate-800">
+                                <p class="text-[10px] text-slate-400 font-bold uppercase">Rango en la Red</p>
+                                <p id="pf-nivel" class="text-2xl font-black text-amber-400">NIVEL 1</p>
+                                <p id="pf-xp" class="text-xs text-slate-300 font-bold">0 XP Acumulados</p>
+                            </div>
+                        </div>
+
+                        <!-- Cuerpo del Portfolio -->
+                        <div class="p-8 space-y-6">
+                            <!-- Fila de KPIs -->
+                            <div class="grid grid-cols-4 gap-4">
+                                <div class="bg-slate-50 border border-slate-200 p-4 rounded-xl text-center">
+                                    <p class="text-[10px] font-black text-slate-400 uppercase">Informes Publicados</p>
+                                    <p id="pf-total" class="text-3xl font-black text-slate-900 mt-1">0</p>
+                                </div>
+                                <div class="bg-slate-50 border border-slate-200 p-4 rounded-xl text-center">
+                                    <p class="text-[10px] font-black text-slate-400 uppercase">Calificación Auditoría</p>
+                                    <p id="pf-media" class="text-3xl font-black text-emerald-600 mt-1">-- / 5</p>
+                                </div>
+                                <div class="bg-slate-50 border border-slate-200 p-4 rounded-xl text-center">
+                                    <p class="text-[10px] font-black text-slate-400 uppercase">Mercados Analizados</p>
+                                    <p id="pf-paises" class="text-xl font-black text-blue-600 mt-2">--</p>
+                                </div>
+                                <div class="bg-slate-50 border border-slate-200 p-4 rounded-xl text-center">
+                                    <p class="text-[10px] font-black text-slate-400 uppercase">Especialización</p>
+                                    <p id="pf-esp-principal" class="text-lg font-black text-indigo-700 mt-2">--</p>
+                                </div>
+                            </div>
+
+                            <!-- Insignias y Distribución -->
+                            <div class="grid grid-cols-3 gap-6">
+                                <div class="col-span-1 bg-slate-50 border border-slate-200 p-5 rounded-xl">
+                                    <h3 class="text-xs font-black uppercase text-slate-500 mb-3">Insignias Desbloqueadas</h3>
+                                    <div id="pf-insignias" class="flex flex-wrap gap-2"></div>
+                                </div>
+                                <div class="col-span-2 bg-slate-50 border border-slate-200 p-5 rounded-xl">
+                                    <h3 class="text-xs font-black uppercase text-slate-500 mb-3">Distribución Metodológica de Informes</h3>
+                                    <div class="space-y-2.5 text-xs font-bold">
+                                        <div>
+                                            <div class="flex justify-between mb-1"><span>Scouting Individual</span><span id="pf-pct-scouting">0%</span></div>
+                                            <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden"><div id="pf-bar-scouting" class="bg-blue-600 h-full w-0"></div></div>
+                                        </div>
+                                        <div>
+                                            <div class="flex justify-between mb-1"><span>Análisis Táctico / Rival</span><span id="pf-pct-tactica">0%</span></div>
+                                            <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden"><div id="pf-bar-tactica" class="bg-purple-600 h-full w-0"></div></div>
+                                        </div>
+                                        <div>
+                                            <div class="flex justify-between mb-1"><span>Big Data & Métricas</span><span id="pf-pct-datos">0%</span></div>
+                                            <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden"><div id="pf-bar-datos" class="bg-amber-500 h-full w-0"></div></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Tabla de Informes Destacados -->
+                            <div>
+                                <h3 class="text-xs font-black uppercase text-slate-500 mb-3 border-b pb-1.5">Registro de Informes Mejor Valorados en RCL</h3>
+                                <table class="w-full text-left border-collapse text-xs">
+                                    <thead>
+                                        <tr class="bg-slate-900 text-white uppercase text-[10px]">
+                                            <th class="p-2.5 rounded-tl-lg">Objetivo Analizado</th>
+                                            <th class="p-2.5">Categoría</th>
+                                            <th class="p-2.5">Detalle Técnico</th>
+                                            <th class="p-2.5">Herramientas</th>
+                                            <th class="p-2.5">Mercado / Tier</th>
+                                            <th class="p-2.5 rounded-tr-lg text-right">Auditoría</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="pf-tabla-informes" class="divide-y divide-slate-200 bg-white"></tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Footer Oficial -->
+                        <div class="bg-slate-100 px-8 py-4 border-t border-slate-200 flex justify-between items-center text-[10px] text-slate-500 font-bold">
+                            <span>DOCUMENTO OFICIAL CERTIFICADO POR RCL SCOUT GROUP</span>
+                            <span id="pf-fecha-emision">Fecha de emisión: --</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ========================================== -->
+            <!-- 11. PANEL DE DIRECCIÓN (ADMIN)             -->
+            <!-- ========================================== -->
+            <div id="tab-admin" class="tab-content">
+                <div class="space-y-8">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <!-- Crear Porra o Encargo -->
+                        <div class="bg-white p-6 rounded-xl shadow-sm border border-emerald-200">
+                            <h3 class="font-black text-emerald-900 mb-4 border-b pb-2">1. Publicar Porra o Encargo Profesional</h3>
+                            <form id="formAdminEventos" class="space-y-3" onsubmit="publicarEventoAdmin(event)">
+                                <div class="grid grid-cols-2 gap-3">
+                                    <div><label class="block text-xs font-bold mb-1">Tipo</label><select id="adm_tipo" class="w-full p-2 border rounded-lg text-sm"><option value="Encargo">🎯 Encargo Profesional (NVL 3)</option><option value="Porra">⚽ Porra de Partido (NVL 1)</option></select></div>
+                                    <div><label class="block text-xs font-bold mb-1">Recompensa por Analista (🪙)</label><input type="number" id="adm_recomp" required placeholder="Ej: 80" class="w-full p-2 border rounded-lg text-sm"></div>
+                                </div>
+                                <div><label class="block text-xs font-bold mb-1">Título del Partido o Proyecto</label><input type="text" id="adm_titulo" required placeholder="Ej: Informe Rival: Real Murcia (3 Plazas)" class="w-full p-2 border rounded-lg text-sm"></div>
+                                <div><label class="block text-xs font-bold mb-1">Plazas / Requisitos del Encargo</label><input type="text" id="adm_detalles" placeholder="Ej: Necesitamos 2 Video Scouts y 1 Data Analyst. Entrega en PDF." class="w-full p-2 border rounded-lg text-sm"></div>
+                                <div><label class="block text-xs font-bold mb-1">Fecha y Hora Límite</label><input type="datetime-local" id="adm_fecha" required class="w-full p-2 border rounded-lg text-sm"></div>
+                                <button type="submit" id="btnPubAdmin" class="w-full bg-emerald-600 text-white font-black py-3 rounded-lg shadow hover:bg-emerald-700 text-sm">PUBLICAR EVENTO</button>
+                            </form>
+                        </div>
+
+                        <!-- Subir Curso a la Academia -->
+                        <div class="bg-white p-6 rounded-xl shadow-sm border border-blue-200">
+                            <h3 class="font-black text-blue-900 mb-4 border-b pb-2">2. Añadir Formación a RCL Academy</h3>
+                            <form id="formAdminCursos" class="space-y-3" onsubmit="publicarCursoAdmin(event)">
+                                <div class="grid grid-cols-2 gap-3">
+                                    <div><label class="block text-xs font-bold mb-1">Categoría</label><select id="crs_cat" class="w-full p-2 border rounded-lg text-sm"><option value="Video Scouting">Video Scouting</option><option value="Big Data & Python">Big Data & Python</option><option value="Análisis Táctico">Análisis Táctico</option><option value="Plantillas RCL">Plantillas & Recursos</option></select></div>
+                                    <div><label class="block text-xs font-bold mb-1">Precio (🪙) y Nivel Mín.</label>
+                                        <div class="flex gap-2">
+                                            <input type="number" id="crs_precio" required placeholder="🪙" class="w-1/2 p-2 border rounded-lg text-sm">
+                                            <input type="number" id="crs_nivel" required placeholder="NVL" value="1" class="w-1/2 p-2 border rounded-lg text-sm">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div><label class="block text-xs font-bold mb-1">Título del Curso / Recurso</label><input type="text" id="crs_titulo" required placeholder="Ej: Masterclass LongoMatch + Botonera RCL" class="w-full p-2 border rounded-lg text-sm"></div>
+                                <div><label class="block text-xs font-bold mb-1">Descripción</label><input type="text" id="crs_desc" required placeholder="Qué aprenderá o descargará el analista..." class="w-full p-2 border rounded-lg text-sm"></div>
+                                <div><label class="block text-xs font-bold mb-1">Enlace al Contenido (Drive / Vídeo / Notion)</label><input type="url" id="crs_link" required placeholder="https://..." class="w-full p-2 border rounded-lg text-sm"></div>
+                                <button type="submit" id="btnCursoAdmin" class="w-full bg-blue-700 text-white font-black py-3 rounded-lg shadow hover:bg-blue-800 text-sm">PUBLICAR EN ACADEMIA</button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Gestión de Candidatos de Encargos y Resolución de Porras -->
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+                        <h3 class="font-black text-slate-800 mb-2">3. Gestión de Solicitudes de Encargos y Resolución de Porras</h3>
+                        <p class="text-xs text-slate-500 mb-4">En los <b>Encargos</b>, revisa quién se ha postulado, selecciona a los analistas elegidos (uno o varios) y, cuando entreguen el trabajo, pulsa en "Pagar a Seleccionados". En las <b>Porras</b>, escribe el marcador final (ej: 2-1).</p>
+                        <div id="cajaAdminEventos" class="space-y-4"></div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- MODAL PERFIL DETALLADO DEL ANALISTA        -->
+    <!-- ========================================== -->
+    <div id="modal-perfil" class="hidden fixed inset-0 bg-slate-950/75 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-200">
+            <div class="bg-slate-900 text-white p-6 flex justify-between items-start sticky top-0 z-10">
+                <div class="flex items-center gap-4">
+                    <div id="mp-avatar" class="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center text-2xl font-black">A</div>
+                    <div>
+                        <h3 id="mp-nombre" class="text-xl font-black">Nombre Analista</h3>
+                        <p id="mp-rol-club" class="text-xs text-emerald-400 font-bold uppercase">--</p>
+                        <div id="mp-insignias" class="flex flex-wrap gap-1.5 mt-2"></div>
+                    </div>
+                </div>
+                <button onclick="cerrarModalPerfil()" class="text-slate-400 hover:text-white text-xl font-black px-2">✕</button>
+            </div>
+            <div class="p-6 space-y-6">
+                <div class="grid grid-cols-3 gap-4 bg-slate-50 p-4 rounded-xl border">
+                    <div class="text-center"><span class="text-[10px] font-bold text-slate-400 uppercase block">Nivel / Experiencia</span><span id="mp-nivel" class="text-lg font-black text-slate-800">--</span></div>
+                    <div class="text-center"><span class="text-[10px] font-bold text-slate-400 uppercase block">Informes Subidos</span><span id="mp-total-inf" class="text-lg font-black text-blue-600">--</span></div>
+                    <div class="text-center"><span class="text-[10px] font-bold text-slate-400 uppercase block">Valoración Media</span><span id="mp-nota" class="text-lg font-black text-amber-500">--</span></div>
+                </div>
+                <div class="flex justify-between items-center border-b pb-2">
+                    <h4 class="font-black text-slate-800 text-sm uppercase">Escaparate de Informes del Analista</h4>
+                    <a id="mp-contacto" href="#" target="_blank" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-4 py-1.5 rounded-lg">🔗 Contactar Analista</a>
+                </div>
+                <div id="mp-lista-informes" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- LÓGICA JAVASCRIPT                          -->
+    <!-- ========================================== -->
+    <script>
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwfDFaFrnxD0lrTTpWbrjqFO2w5J3Jlsk9-FxBz9r1rfkRWHODE1h5DhmHaSFPoT5lByA/exec";
+        
+        let usuarioActual = null;
+        let mercadoGlobal = [];
+        let misCompras = [];
+        let directorioGlobal = [];
+        let eventosGlobales = [];
+        let misParticipacionesGlobal = [];
+        let informeActualTinder = null;
+        let valoracionSeleccionada = 0;
+
+        async function enviarA_Google(datos) {
+            try {
+                const res = await fetch(SCRIPT_URL, { method: "POST", body: JSON.stringify(datos), headers: { "Content-Type": "text/plain;charset=utf-8" } });
+                return await res.json();
+            } catch (e) { return { exito: false, error: "Error de conexión con el servidor." }; }
+        }
+
+        function verificarNivel(tabId, xpRequerida, elementoBtn) {
+            let xp = usuarioActual.xp || 0;
+            if (usuarioActual.rol === "Admin" || usuarioActual.rol === "Director" || xp >= 10000) {
+                cambiarTab(tabId, elementoBtn); return;
+            }
+            if (xp < xpRequerida) {
+                let nvl = Math.floor(xpRequerida / 500) + 1;
+                alert(`🔒 MÓDULO BLOQUEADO\n\nRequiere Nivel ${nvl} (${xpRequerida} XP). Actualmente tienes ${xp} XP.\nSube análisis a la base de datos para ascender de rango.`);
+                return;
+            }
+            cambiarTab(tabId, elementoBtn);
+        }
+
+        function cambiarTab(tabId, elementoBtn) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            if (elementoBtn) elementoBtn.classList.add('active');
+            if (tabId === 'tab-portfolio') renderizarVistaPortfolio();
+        }
+
+        function leerPDFBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader(); reader.readAsDataURL(file);
+                reader.onload = () => resolve(reader.result.split(',')[1]);
+                reader.onerror = error => reject(error);
+            });
+        }
+
+        function mostrarRecuperacion() { document.getElementById("loginForm").classList.add("hidden"); document.getElementById("recuperarForm").classList.remove("hidden"); }
+        function ocultarRecuperacion() { document.getElementById("recuperarForm").classList.add("hidden"); document.getElementById("loginForm").classList.remove("hidden"); }
+        
+        // --- LOGIN ---
+        document.getElementById("loginForm").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById("btnLogin"); btn.innerText = "CONECTANDO..."; btn.disabled = true;
+            const res = await enviarA_Google({ accion: "login", email: document.getElementById("correo").value, contrasena: document.getElementById("contrasena").value });
+            
+            if (res.exito) {
+                usuarioActual = res.usuario;
+                actualizarUIDashboard();
+                if (usuarioActual.rol === "Admin" || usuarioActual.rol === "Director" || usuarioActual.xp >= 10000) {
+                    document.getElementById("nav-admin").classList.remove("hidden");
+                }
+                document.getElementById("login-screen").classList.add("hidden");
+                document.getElementById("dashboard-screen").classList.remove("hidden");
+                
+                await Promise.all([
+                    cargarMercado(),
+                    cargarDirectorio(),
+                    cargarMisParticipaciones(),
+                    cargarEventos(),
+                    cargarCursos(),
+                    cargarMensajesTablon(),
+                    cargarNotificaciones()
+                ]);
+                renderizarVistaPortfolio();
+            } else {
+                const msg = document.getElementById("loginMensaje");
+                msg.innerText = res.error; msg.className = "text-sm mt-4 font-bold text-red-500 block";
+            }
+            btn.innerText = "ENTRAR AL ECOSISTEMA"; btn.disabled = false;
+        });
+
+        document.getElementById("recuperarForm").addEventListener("submit", async (e) => {
+            e.preventDefault(); const btn = document.getElementById("btnRecuperar"); btn.innerText = "Enviando..."; btn.disabled = true;
+            const res = await enviarA_Google({ accion: "recuperar_password", email: document.getElementById("correoRecuperacion").value });
+            const msg = document.getElementById("loginMensaje"); msg.innerText = res.exito ? res.mensaje : res.error; msg.className = `text-sm mt-4 font-bold block ${res.exito ? 'text-emerald-500' : 'text-red-500'}`;
+            if(res.exito) ocultarRecuperacion(); btn.innerText = "ENVIAR"; btn.disabled = false;
+        });
+
+        function actualizarUIDashboard() {
+            document.getElementById("ui-nombre").innerText = usuarioActual.nombre;
+            document.getElementById("ui-rol").innerText = usuarioActual.rol;
+            document.getElementById("ui-nivel").innerText = usuarioActual.nivel;
+            document.getElementById("ui-puntos").innerText = usuarioActual.puntos;
+            let xp = usuarioActual.xp || 0;
+            let xpRonda = xp % 500;
+            let porcentaje = (xpRonda / 500) * 100;
+            document.getElementById("ui-xp-texto").innerText = xp >= 2000 ? `${xp} XP (ÉLITE)` : `${xpRonda}/500 XP`;
+            document.getElementById("ui-xp-bar").style.width = `${porcentaje}%`;
+        }
+
+        // --- NOTIFICACIONES ---
+        function toggleNotificaciones() {
+            document.getElementById("panel-notificaciones").classList.toggle("hidden");
+        }
+
+        async function cargarNotificaciones() {
+            const res = await enviarA_Google({ accion: "cargar_notificaciones", id_usuario: usuarioActual.id });
+            if (res.exito) {
+                const cont = document.getElementById("lista-notificaciones");
+                const badge = document.getElementById("badge-notif");
+                const noLeidas = res.datos.filter(n => !n.leido).length;
+                if (noLeidas > 0) { badge.innerText = noLeidas; badge.classList.remove("hidden"); }
+                else { badge.classList.add("hidden"); }
+
+                if (res.datos.length === 0) {
+                    cont.innerHTML = `<p class="text-xs text-slate-400 text-center py-4">No tienes notificaciones</p>`;
+                    return;
+                }
+                cont.innerHTML = "";
+                res.datos.forEach(n => {
+                    cont.innerHTML += `<div class="p-2.5 text-xs ${n.leido ? 'bg-white text-slate-500' : 'bg-blue-50 font-bold text-slate-800'} rounded">
+                        <p>${n.mensaje}</p>
+                        <span class="text-[10px] text-slate-400 block mt-1">${n.fecha}</span>
+                    </div>`;
+                });
+            }
+        }
+
+        async function marcarNotificacionesLeidas() {
+            document.getElementById("badge-notif").classList.add("hidden");
+            await enviarA_Google({ accion: "leer_notificaciones", id_usuario: usuarioActual.id });
+            cargarNotificaciones();
+        }
+
+        // --- SUBIR INFORME ---
+        document.getElementById("formSubirInforme").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById("btnSubir"); btn.innerText = "SUBIENDO PDF A DRIVE..."; btn.disabled = true;
+            let base64PDF = ""; const fileInput = document.getElementById("f_pdf").files[0];
+            if (fileInput) base64PDF = await leerPDFBase64(fileInput);
+
+            const payload = {
+                accion: "guardar_informe", id_usuario: usuarioActual.id, tipo_informe: document.getElementById("f_tipo").value,
+                objetivo: document.getElementById("f_objetivo").value, detalle_tecnico: document.getElementById("f_detalle").value,
+                herramientas: document.getElementById("f_herr").value, pais: document.getElementById("f_pais").value,
+                tier: document.getElementById("f_tier").value, grupo: document.getElementById("f_grupo").value,
+                pdfBase64: base64PDF, en_tinder: document.getElementById("f_tinder").checked
+            };
+            const res = await enviarA_Google(payload);
+            if (res.exito) {
+                usuarioActual.xp = res.nuevaXp || (usuarioActual.xp + 50);
+                usuarioActual.puntos = res.nuevosPuntos;
+                usuarioActual.nivel = Math.floor(usuarioActual.xp / 500) + 1;
+                actualizarUIDashboard();
+                document.getElementById("formSubirInforme").reset();
+                await cargarMercado();
+                await cargarDirectorio();
+                alert("✅ Informe publicado con éxito (+50 XP y +50 🪙).");
+            } else alert("Error: " + res.error);
+            btn.innerText = "SUBIR INFORME (+50 XP y +50 🪙)"; btn.disabled = false;
+        });
+
+        // --- MERCADO GLOBAL ---
+        async function cargarMercado() {
+            const res = await enviarA_Google({ accion: "cargar_informes", id_usuario: usuarioActual.id });
+            if (res.exito) {
+                mercadoGlobal = res.datos;
+                misCompras = res.mis_compras || [];
+                renderizarMercado();
+            }
+        }
+
+        function generarBotonInforme(inf) {
+            const precio = inf.Precio || 15;
+            if (inf.ID_Usuario === usuarioActual.id) {
+                return inf.Enlace_Archivo ? `<a href="${inf.Enlace_Archivo}" target="_blank" class="bg-slate-900 text-white px-3 py-1.5 rounded-lg text-xs font-bold">Tu Informe</a>` : `<span class="text-xs text-slate-400">Sin PDF</span>`;
+            } else if (usuarioActual.rol === "Admin" || usuarioActual.rol === "Director") {
+                return inf.Enlace_Archivo ? `<a href="${inf.Enlace_Archivo}" target="_blank" class="bg-emerald-800 text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow">Acceso Admin</a>` : `<span class="text-xs text-slate-400">Sin PDF</span>`;
+            } else if (misCompras.includes(inf.ID_Informe)) {
+                return inf.Enlace_Archivo ? `<a href="${inf.Enlace_Archivo}" target="_blank" class="bg-emerald-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow">📄 Abrir PDF</a>` : `<span class="text-xs text-slate-400">Sin PDF</span>`;
+            } else {
+                return `<button onclick="comprarInforme('${inf.ID_Informe}', ${precio}, event)" class="bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded-lg text-xs font-black shadow transition">🔓 ${precio} 🪙</button>`;
+            }
+        }
+
+        function renderizarMercado() {
+            const container = document.getElementById("cajaResultadosMercado"); container.innerHTML = "";
+            const vTipo = document.getElementById("filtroTipo").value;
+            const vPais = document.getElementById("filtroPais").value;
+            const vTier = document.getElementById("filtroTier").value;
+            const vTexto = document.getElementById("filtroTexto").value.toLowerCase();
+            
+            const filtrados = mercadoGlobal.filter(inf => {
+                if (!inf.ID_Informe) return false;
+                const matchTipo = vTipo === "" || inf.Tipo_Informe === vTipo;
+                const matchPais = vPais === "" || inf.Pais === vPais;
+                const matchTier = vTier === "" || inf.Tier.toString() === vTier;
+                const matchTxt = vTexto === "" || `${inf.Objetivo} ${inf.Detalle_Tecnico} ${inf.Nombre_Autor}`.toLowerCase().includes(vTexto);
+                return matchTipo && matchPais && matchTier && matchTxt;
+            });
+
+            if (filtrados.length === 0) {
+                container.innerHTML = `<div class="col-span-full text-center text-slate-400 py-10 font-bold">No se encontraron informes con estos filtros.</div>`;
+                return;
+            }
+
+            filtrados.slice().reverse().forEach(inf => {
+                let color = "bg-blue-100 text-blue-800";
+                if (inf.Tipo_Informe === "Táctica") color = "bg-purple-100 text-purple-800";
+                if (inf.Tipo_Informe === "Datos") color = "bg-amber-100 text-amber-800";
+                const badgeElite = inf.Es_Elite ? `<span class="bg-amber-100 text-amber-800 text-[10px] font-black px-1.5 py-0.5 rounded ml-1">👑 ÉLITE</span>` : "";
+
+                container.innerHTML += `<div class="bg-white border border-slate-200 p-5 rounded-xl shadow-sm flex flex-col justify-between hover:border-blue-400 transition">
+                    <div>
+                        <div class="flex justify-between items-start mb-3">
+                            <span class="px-2.5 py-1 rounded text-[10px] font-black uppercase ${color}">${inf.Tipo_Informe}</span>
+                            <div class="flex items-center gap-1 bg-slate-100 px-2 py-0.5 rounded-full">
+                                <span class="text-amber-500 text-xs">★</span>
+                                <span class="text-xs font-black">${Number(inf.Nota_Media) > 0 ? Number(inf.Nota_Media).toFixed(1) : 'S/N'}</span>
+                            </div>
+                        </div>
+                        <h3 class="font-black text-lg text-slate-900 leading-snug mb-1">${inf.Objetivo}</h3>
+                        <p class="text-xs font-bold text-slate-500 mb-2">${inf.Detalle_Tecnico} • ${inf.Pais} • Tier ${inf.Tier}</p>
+                        ${inf.Herramientas ? `<p class="text-[11px] text-slate-400 mb-3">🛠️ ${inf.Herramientas}</p>` : ''}
+                    </div>
+                    <div class="flex justify-between items-center border-t border-slate-100 pt-3 mt-2">
+                        <button onclick="abrirPerfilAnalista('${inf.ID_Usuario}')" class="text-left text-[11px] text-blue-700 hover:underline font-extrabold">
+                            👤 ${inf.Nombre_Autor || inf.ID_Usuario} ${badgeElite}
+                        </button>
+                        ${generarBotonInforme(inf)}
+                    </div>
+                </div>`;
+            });
+        }
+
+        document.getElementById("filtroTipo").addEventListener("change", renderizarMercado);
+        document.getElementById("filtroPais").addEventListener("change", renderizarMercado);
+        document.getElementById("filtroTier").addEventListener("change", renderizarMercado);
+        document.getElementById("filtroTexto").addEventListener("input", renderizarMercado);
+
+        async function comprarInforme(idInforme, precio, ev) {
+            if (usuarioActual.puntos < precio) { alert(`Necesitas ${precio} 🪙 para desbloquear este informe.`); return; }
+            if (!confirm(`¿Gastar ${precio} 🪙 para desbloquear este informe permanentemente?`)) return;
+            const btn = ev.currentTarget; const txt = btn.innerText; btn.innerText = "⏳"; btn.disabled = true;
+            const res = await enviarA_Google({ accion: "comprar_informe", id_usuario: usuarioActual.id, id_informe: idInforme });
+            if (res.exito) {
+                if (res.nuevosPuntos !== undefined) { usuarioActual.puntos = res.nuevosPuntos; actualizarUIDashboard(); }
+                window.open(res.enlace, '_blank');
+                await cargarMercado();
+            } else { alert(res.error); btn.innerText = txt; btn.disabled = false; }
+        }
+
+        // --- AUDITORÍA ---
+        const estrellas = document.querySelectorAll('.star-btn');
+        estrellas.forEach(star => {
+            star.addEventListener('click', (e) => {
+                valoracionSeleccionada = parseInt(e.target.dataset.val);
+                estrellas.forEach(s => s.classList.remove('active')); e.target.classList.add('active');
+                const recompensa = usuarioActual.xp >= 2000 ? 15 : 10;
+                const btnVotar = document.getElementById('btnVotar');
+                btnVotar.innerText = `CONFIRMAR EVALUACIÓN (+${recompensa} 🪙)`;
+                btnVotar.classList.remove('hidden');
+            });
+        });
+
+        async function buscarInformeAuditoria() {
+            const btn = document.getElementById("btnBuscarTinder"); btn.innerText = "Buscando..."; btn.disabled = true;
+            const res = await enviarA_Google({ accion: "cargar_tinder", id_usuario: usuarioActual.id });
+            if (res.exito) {
+                informeActualTinder = res.informe;
+                document.getElementById("t_tipo").innerText = informeActualTinder.Tipo_Informe;
+                document.getElementById("t_objetivo").innerText = informeActualTinder.Objetivo;
+                document.getElementById("t_detalle").innerText = `${informeActualTinder.Detalle_Tecnico} | ${informeActualTinder.Pais} | Tier ${informeActualTinder.Tier}`;
+                document.getElementById("t_enlace").href = informeActualTinder.Enlace_Archivo || "#";
+                document.getElementById("tinderInicio").classList.add("hidden");
+                document.getElementById("tinderEvaluacion").classList.remove("hidden");
+                document.getElementById("tinderEvaluacion").classList.add("flex");
+                valoracionSeleccionada = 0; estrellas.forEach(s => s.classList.remove('active')); document.getElementById('btnVotar').classList.add('hidden');
+            } else alert(res.mensaje);
+            btn.innerText = "🔎 Asignar Informe para Auditar"; btn.disabled = false;
+        }
+
+        async function enviarEvaluacion() {
+            if (valoracionSeleccionada === 0) return;
+            const btn = document.getElementById("btnVotar"); btn.innerText = "Registrando..."; btn.disabled = true;
+            const recompensa = usuarioActual.xp >= 2000 ? 15 : 10;
+            const res = await enviarA_Google({ accion: "evaluar_tinder", id_evaluador: usuarioActual.id, id_informe: informeActualTinder.ID_Informe, estrellas: valoracionSeleccionada, pago_evaluador: recompensa });
+            if (res.exito) {
+                usuarioActual.puntos += (res.pago || recompensa);
+                actualizarUIDashboard();
+                alert(`✅ Auditoría registrada. Has ganado +${res.pago || recompensa} 🪙.`);
+                document.getElementById("tinderEvaluacion").classList.add("hidden");
+                document.getElementById("tinderEvaluacion").classList.remove("flex");
+                document.getElementById("tinderInicio").classList.remove("hidden");
+                cargarMercado();
+            } else alert("Error: " + res.error);
+            btn.disabled = false;
+        }
+
+        // --- ENCARGOS (MULTI-SOLICITUD) Y PORRAS ---
+        async function cargarEventos() {
+            const res = await enviarA_Google({ accion: "cargar_eventos" });
+            if (res.exito) {
+                eventosGlobales = res.datos;
+                renderizarEventos();
+            }
+        }
+
+        function renderizarEventos() {
+            const cajaPorras = document.getElementById("cajaPorras");
+            const cajaEncargos = document.getElementById("cajaEncargos");
+            const cajaAdmin = document.getElementById("cajaAdminEventos");
+            cajaPorras.innerHTML = ""; cajaEncargos.innerHTML = ""; cajaAdmin.innerHTML = "";
+            let pCount = 0, eCount = 0, aCount = 0;
+
+            eventosGlobales.forEach(m => {
+                if (m.estado === "Abierto") {
+                    const limiteTexto = (m.limite && m.limite.toString().includes('T')) ? m.limite.replace('T', ' ') : m.limite;
+                    const miCandidatura = (m.candidatos || []).find(c => c.id_usuario === usuarioActual.id);
+
+                    if (m.tipo === "Porra") {
+                        const btnHtml = miCandidatura
+                            ? `<span class="text-xs font-black text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-200">Pronóstico: ${miCandidatura.mensaje}</span>`
+                            : `<button onclick="participarPorra('${m.id}')" class="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3.5 py-1.5 rounded-lg font-bold shadow">Pronosticar</button>`;
+
+                        cajaPorras.innerHTML += `<div class="bg-slate-50 border border-slate-200 p-4 rounded-xl flex flex-col justify-between">
+                            <div>
+                                <div class="flex justify-between items-center mb-2">
+                                    <span class="px-2 py-0.5 bg-blue-100 text-blue-800 text-[10px] font-black rounded uppercase">PORRA</span>
+                                    <span class="font-black text-amber-500 text-sm">+${m.recompensa} 🪙</span>
+                                </div>
+                                <h3 class="font-black text-slate-800 text-base mb-1">${m.titulo}</h3>
+                                ${m.detalles ? `<p class="text-xs text-slate-500 mb-3">${m.detalles}</p>` : ''}
+                            </div>
+                            <div class="flex justify-between items-center border-t border-slate-200 pt-3 mt-2">
+                                <span class="text-[11px] text-slate-500 font-bold">⏰ Cierre: ${limiteTexto}</span>
+                                ${btnHtml}
+                            </div>
+                        </div>`;
+                        pCount++;
+                    } else {
+                        // ENCARGO PROFESIONAL
+                        const seleccionados = (m.candidatos || []).filter(c => c.estado_candidato === "Seleccionado");
+                        let estadoBtn = `<button onclick="solicitarEncargo('${m.id}')" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs px-3.5 py-1.5 rounded-lg font-bold shadow">✋ Solicitar Encargo</button>`;
+                        if (miCandidatura) {
+                            if (miCandidatura.estado_candidato === "Seleccionado") {
+                                estadoBtn = `<span class="bg-emerald-600 text-white text-xs px-3 py-1.5 rounded-lg font-black">✅ SELECCIONADO POR DIRECCIÓN</span>`;
+                            } else {
+                                estadoBtn = `<span class="bg-amber-100 text-amber-800 text-xs px-3 py-1.5 rounded-lg font-bold">⏳ Solicitud enviada</span>`;
+                            }
+                        }
+
+                        cajaEncargos.innerHTML += `<div class="bg-slate-50 border border-indigo-200 p-4 rounded-xl flex flex-col justify-between">
+                            <div>
+                                <div class="flex justify-between items-center mb-2">
+                                    <span class="px-2 py-0.5 bg-indigo-100 text-indigo-800 text-[10px] font-black rounded uppercase">ENCARGO B2B</span>
+                                    <span class="font-black text-amber-500 text-sm">+${m.recompensa} 🪙 + 100 XP</span>
+                                </div>
+                                <h3 class="font-black text-slate-900 text-base mb-1">${m.titulo}</h3>
+                                <p class="text-xs text-slate-600 mb-2">${m.detalles || 'Consulta los detalles técnicos con Dirección.'}</p>
+                                <p class="text-[11px] font-bold text-indigo-700 mb-3">👥 Candidatos postulados: ${(m.candidatos || []).length} | Asignados: ${seleccionados.length}</p>
+                            </div>
+                            <div class="flex justify-between items-center border-t border-slate-200 pt-3">
+                                <span class="text-[11px] text-slate-500 font-bold">⏰ Entrega: ${limiteTexto}</span>
+                                ${estadoBtn}
+                            </div>
+                        </div>`;
+                        eCount++;
+                    }
+
+                    // PANEL DE ADMIN PARA ESTE EVENTO
+                    if (usuarioActual.rol === "Admin" || usuarioActual.rol === "Director" || usuarioActual.xp >= 10000) {
+                        if (m.tipo === "Porra") {
+                            cajaAdmin.innerHTML += `<div class="p-4 border rounded-xl bg-slate-50 flex flex-col md:flex-row justify-between items-center gap-3">
+                                <div>
+                                    <span class="text-[10px] font-black uppercase bg-blue-100 text-blue-800 px-2 py-0.5 rounded">PORRA</span>
+                                    <span class="font-black text-slate-800 ml-2">${m.titulo}</span>
+                                    <span class="text-xs text-slate-500 ml-2">(${(m.candidatos || []).length} participantes)</span>
+                                </div>
+                                <div class="flex gap-2">
+                                    <input type="text" id="res_${m.id}" placeholder="Resultado (ej: 2-1)" class="px-3 py-1.5 border rounded-lg text-xs w-40 bg-white">
+                                    <button onclick="resolverEventoAdmin('${m.id}', 'Porra')" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-1.5 text-xs rounded-lg font-black">Cerrar y Pagar Acertantes</button>
+                                </div>
+                            </div>`;
+                        } else {
+                            // GESTIÓN DE CANDIDATOS DEL ENCARGO
+                            let listaCandHtml = "";
+                            if (!m.candidatos || m.candidatos.length === 0) {
+                                listaCandHtml = `<p class="text-xs text-slate-400 italic">Aún no hay analistas postulados para este encargo.</p>`;
+                            } else {
+                                m.candidatos.forEach(c => {
+                                    const esSel = c.estado_candidato === "Seleccionado";
+                                    listaCandHtml += `<div class="flex justify-between items-center bg-white p-2.5 rounded-lg border ${esSel ? 'border-emerald-500 bg-emerald-50/40' : 'border-slate-200'}">
+                                        <div>
+                                            <span class="font-black text-xs text-slate-800">${c.nombre}</span>
+                                            <span class="text-[10px] font-bold text-slate-400 uppercase ml-1">(${c.rol} • NVL ${c.nivel})</span>
+                                            <p class="text-xs text-slate-600 mt-0.5">💬 "${c.mensaje}"</p>
+                                        </div>
+                                        <button onclick="alternarSeleccionCandidato('${c.id_participacion}', '${m.id}', ${!esSel})" class="px-3 py-1 rounded text-xs font-black transition ${esSel ? 'bg-emerald-600 text-white' : 'bg-slate-200 hover:bg-slate-300 text-slate-700'}">
+                                            ${esSel ? '✅ Seleccionado (Quitar)' : 'Seleccionar Analista'}
+                                        </button>
+                                    </div>`;
+                                });
+                            }
+
+                            cajaAdmin.innerHTML += `<div class="p-4 border border-indigo-200 rounded-xl bg-indigo-50/30 space-y-3">
+                                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 border-b border-indigo-100 pb-2">
+                                    <div>
+                                        <span class="text-[10px] font-black uppercase bg-indigo-100 text-indigo-800 px-2 py-0.5 rounded">ENCARGO</span>
+                                        <span class="font-black text-slate-900 ml-2">${m.titulo}</span>
+                                        <span class="text-xs font-bold text-amber-600 ml-2">(+${m.recompensa} 🪙 por analista seleccionado)</span>
+                                    </div>
+                                    <button onclick="resolverEventoAdmin('${m.id}', 'Encargo')" class="bg-slate-900 hover:bg-slate-800 text-white px-4 py-1.5 text-xs rounded-lg font-black shadow">
+                                        💰 Pagar a Seleccionados y Cerrar Encargo
+                                    </button>
+                                </div>
+                                <div class="space-y-2">${listaCandHtml}</div>
+                            </div>`;
+                        }
+                        aCount++;
+                    }
+                }
+            });
+
+            if (pCount === 0) cajaPorras.innerHTML = "<p class='col-span-full text-slate-400 text-sm'>No hay porras abiertas ahora mismo.</p>";
+            if (eCount === 0) cajaEncargos.innerHTML = "<p class='col-span-full text-slate-400 text-sm'>No hay encargos abiertos ahora mismo.</p>";
+            if (aCount === 0) cajaAdmin.innerHTML = "<p class='text-slate-400 text-sm'>No hay eventos activos pendientes.</p>";
+        }
+
+        async function participarPorra(idEvento) {
+            const pred = prompt("Introduce el marcador exacto para esta porra (ejemplo: 2-1):");
+            if (!pred) return;
+            const res = await enviarA_Google({ accion: "participar_evento", id_usuario: usuarioActual.id, nombre_usuario: usuarioActual.nombre, id_evento: idEvento, prediccion: pred.trim() });
+            if (res.exito) { alert(res.mensaje); await cargarEventos(); await cargarMisParticipaciones(); }
+            else alert(res.error);
+        }
+
+        async function solicitarEncargo(idEvento) {
+            const propuesta = prompt("Escribe una breve nota para Dirección (disponibilidad, herramientas o enfoque para este encargo):");
+            if (!propuesta) return;
+            const res = await enviarA_Google({ accion: "participar_evento", id_usuario: usuarioActual.id, nombre_usuario: usuarioActual.nombre, id_evento: idEvento, prediccion: propuesta.trim() });
+            if (res.exito) { alert(res.mensaje); await cargarEventos(); await cargarMisParticipaciones(); }
+            else alert(res.error);
+        }
+
+        async function alternarSeleccionCandidato(idParticipacion, idEvento, seleccionar) {
+            const res = await enviarA_Google({ accion: "seleccionar_candidato", id_participacion: idParticipacion, id_evento: idEvento, seleccionar: seleccionar });
+            if (res.exito) await cargarEventos();
+            else alert(res.error);
+        }
+
+        async function resolverEventoAdmin(idEvento, tipo) {
+            let resultado = "Completado";
+            if (tipo === "Porra") {
+                resultado = document.getElementById(`res_${idEvento}`).value.trim();
+                if (!resultado) { alert("Introduce el marcador final (ej: 2-1)."); return; }
+            } else {
+                if (!confirm("¿Confirmas que los analistas seleccionados han entregado el encargo? Se les ingresarán las monedas y +100 XP automáticamente.")) return;
+            }
+            const res = await enviarA_Google({ accion: "resolver_evento", id_evento: idEvento, resultado: resultado });
+            if (res.exito) { alert(res.mensaje); await cargarEventos(); await cargarMisParticipaciones(); }
+            else alert(res.error);
+        }
+
+        async function cargarMisParticipaciones() {
+            const res = await enviarA_Google({ accion: "cargar_mis_participaciones", id_usuario: usuarioActual.id });
+            if (res.exito) {
+                misParticipacionesGlobal = res.datos;
+                const histP = document.getElementById("historialPorras");
+                const histE = document.getElementById("historialEncargos");
+                histP.innerHTML = ""; histE.innerHTML = "";
+                let pCount = 0, eCount = 0, resueltasP = 0, acertadasP = 0;
+
+                res.datos.slice().reverse().forEach(p => {
+                    if (p.tipo === "Porra") {
+                        pCount++;
+                        if (p.estado === "Cerrado") {
+                            resueltasP++;
+                            if (p.resultado && p.resultado.includes("✅")) acertadasP++;
+                        }
+                        histP.innerHTML += `<div class="bg-slate-50 p-3 rounded-lg border text-xs flex justify-between items-center">
+                            <div><span class="font-black text-slate-800 block">${p.titulo}</span><span class="text-slate-500">Tu pronóstico: <b>${p.prediccion}</b></span></div>
+                            <span class="font-bold text-blue-700">${p.resultado || 'Pendiente'}</span>
+                        </div>`;
+                    } else {
+                        eCount++;
+                        let badgeColor = "bg-amber-100 text-amber-800";
+                        if (p.resultado === "Seleccionado") badgeColor = "bg-emerald-100 text-emerald-800";
+                        if (p.resultado && p.resultado.includes("🏆")) badgeColor = "bg-blue-100 text-blue-800";
+                        histE.innerHTML += `<div class="bg-slate-50 p-3 rounded-lg border text-xs flex justify-between items-center">
+                            <div><span class="font-black text-slate-800 block">${p.titulo}</span><span class="text-slate-500">"${p.prediccion}"</span></div>
+                            <span class="px-2 py-1 rounded font-black text-[10px] ${badgeColor}">${p.resultado}</span>
+                        </div>`;
+                    }
+                });
+
+                const winRate = resueltasP > 0 ? Math.round((acertadasP / resueltasP) * 100) : 0;
+                document.getElementById("badgeWinRate").innerText = `Acierto: ${winRate}% (${acertadasP}/${resueltasP})`;
+                if (pCount === 0) histP.innerHTML = "<p class='text-slate-400 text-xs'>Sin predicciones registradas.</p>";
+                if (eCount === 0) histE.innerHTML = "<p class='text-slate-400 text-xs'>No has solicitado encargos todavía.</p>";
+            }
+        }
+
+        async function publicarEventoAdmin(ev) {
+            ev.preventDefault();
+            const btn = document.getElementById("btnPubAdmin"); btn.innerText = "PUBLICANDO..."; btn.disabled = true;
+            const res = await enviarA_Google({
+                accion: "crear_evento",
+                tipo: document.getElementById("adm_tipo").value,
+                titulo: document.getElementById("adm_titulo").value,
+                recompensa: document.getElementById("adm_recomp").value,
+                limite: document.getElementById("adm_fecha").value,
+                detalles: document.getElementById("adm_detalles").value
+            });
+            if (res.exito) { alert("✅ Evento publicado."); document.getElementById("formAdminEventos").reset(); cargarEventos(); }
+            else alert(res.error);
+            btn.innerText = "PUBLICAR EVENTO"; btn.disabled = false;
+        }
+
+        // --- ACADEMIA RCL (TIENDA DE CURSOS) ---
+        async function cargarCursos() {
+            const res = await enviarA_Google({ accion: "cargar_cursos", id_usuario: usuarioActual.id });
+            if (res.exito) {
+                const cont = document.getElementById("cajaCursos"); cont.innerHTML = "";
+                const misCursos = res.mis_cursos || [];
+                if (res.datos.length === 0) {
+                    cont.innerHTML = `<div class="col-span-full bg-white p-8 rounded-xl border text-center text-slate-400 font-bold">Próximamente: Dirección publicará los primeros cursos y recursos exclusivos aquí.</div>`;
+                    return;
+                }
+                res.datos.forEach(c => {
+                    const comprado = misCursos.includes(c.id) || usuarioActual.rol === "Admin" || usuarioActual.rol === "Director";
+                    const btn = comprado
+                        ? `<a href="${c.enlace}" target="_blank" class="bg-emerald-600 text-white px-4 py-2 rounded-lg text-xs font-black shadow">▶️ Acceder al Contenido</a>`
+                        : `<button onclick="comprarCurso('${c.id}', ${c.precio})" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-xs font-black shadow">🔓 Canjear (${c.precio} 🪙)</button>`;
+
+                    cont.innerHTML += `<div class="bg-white border border-slate-200 p-5 rounded-xl shadow-sm flex flex-col justify-between">
+                        <div>
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-[10px] font-black uppercase bg-blue-100 text-blue-800 px-2.5 py-1 rounded">${c.categoria}</span>
+                                <span class="text-xs font-bold text-slate-400">Nivel mín: ${c.nivel_minimo}</span>
+                            </div>
+                            <h3 class="font-black text-base text-slate-900 mb-1">${c.titulo}</h3>
+                            <p class="text-xs text-slate-500 mb-4">${c.descripcion}</p>
+                        </div>
+                        <div class="flex justify-between items-center border-t pt-3">
+                            <span class="font-black text-amber-500 text-sm">${c.precio} 🪙</span>
+                            ${btn}
+                        </div>
+                    </div>`;
+                });
+            }
+        }
+
+        async function publicarCursoAdmin(ev) {
+            ev.preventDefault();
+            const btn = document.getElementById("btnCursoAdmin"); btn.innerText = "GUARDANDO..."; btn.disabled = true;
+            const res = await enviarA_Google({
+                accion: "crear_curso",
+                titulo: document.getElementById("crs_titulo").value,
+                categoria: document.getElementById("crs_cat").value,
+                descripcion: document.getElementById("crs_desc").value,
+                precio: document.getElementById("crs_precio").value,
+                nivel_minimo: document.getElementById("crs_nivel").value,
+                enlace: document.getElementById("crs_link").value
+            });
+            if (res.exito) { alert("✅ Curso publicado en la Academia."); document.getElementById("formAdminCursos").reset(); cargarCursos(); }
+            else alert(res.error);
+            btn.innerText = "PUBLICAR EN ACADEMIA"; btn.disabled = false;
+        }
+
+        async function comprarCurso(idCurso, precio) {
+            if (usuarioActual.puntos < precio) { alert("No tienes suficientes monedas RCL (🪙)."); return; }
+            if (!confirm(`¿Deseas canjear ${precio} 🪙 por el acceso permanente a esta formación?`)) return;
+            const res = await enviarA_Google({ accion: "comprar_curso", id_usuario: usuarioActual.id, id_curso: idCurso });
+            if (res.exito) {
+                usuarioActual.puntos = res.nuevosPuntos; actualizarUIDashboard();
+                window.open(res.enlace, '_blank');
+                cargarCursos();
+            } else alert(res.error);
+        }
+
+        // --- DIRECTORIO, PERFILES E INSIGNIAS ---
+        async function cargarDirectorio() {
+            const res = await enviarA_Google({ accion: "cargar_directorio" });
+            if (res.exito) {
+                directorioGlobal = res.datos;
+                renderizarDirectorio();
+                renderizarRanking();
+            }
+        }
+
+        function renderizarDirectorio() {
+            const cont = document.getElementById("cajaDirectorio"); cont.innerHTML = "";
+            const filtro = (document.getElementById("buscarAnalista")?.value || "").toLowerCase();
+
+            directorioGlobal.filter(u => `${u.nombre} ${u.rol} ${u.club}`.toLowerCase().includes(filtro)).forEach(usr => {
+                const badgesHtml = (usr.insignias || []).map(b => `<span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${b.color}">${b.icono} ${b.nombre}</span>`).join("");
+                cont.innerHTML += `<div onclick="abrirPerfilAnalista('${usr.id}')" class="bg-white border border-slate-200 p-5 rounded-xl shadow-sm text-center hover:border-blue-500 hover:shadow-md transition cursor-pointer flex flex-col justify-between">
+                    <div>
+                        <div class="w-14 h-14 bg-slate-900 text-white rounded-full mx-auto mb-3 flex items-center justify-center text-lg font-black">${usr.nombre.charAt(0)}</div>
+                        <h3 class="font-black text-slate-900 text-base">${usr.nombre}</h3>
+                        <p class="text-[11px] text-emerald-600 font-black uppercase">${usr.rol} • NVL ${usr.nivel}</p>
+                        <p class="text-xs text-slate-500 mt-0.5 mb-3">${usr.club}</p>
+                        <div class="flex flex-wrap justify-center gap-1 mb-4">${badgesHtml || '<span class="text-[10px] text-slate-400">Analista RCL</span>'}</div>
+                    </div>
+                    <div class="border-t pt-3 flex justify-around text-xs font-bold text-slate-600">
+                        <span>📄 ${usr.total_informes} inf.</span>
+                        <span>★ ${usr.nota_media > 0 ? usr.nota_media : 'S/N'}</span>
+                    </div>
+                </div>`;
+            });
+        }
+
+        function renderizarRanking() {
+            const contXP = document.getElementById("tablaRankingXP");
+            const contCalidad = document.getElementById("tablaRankingCalidad");
+            contXP.innerHTML = ""; contCalidad.innerHTML = "";
+
+            const porXP = directorioGlobal.slice().sort((a, b) => b.xp - a.xp).slice(0, 10);
+            porXP.forEach((u, idx) => {
+                const medalla = idx === 0 ? "🥇" : idx === 1 ? "🥈" : idx === 2 ? "🥉" : `#${idx + 1}`;
+                contXP.innerHTML += `<div onclick="abrirPerfilAnalista('${u.id}')" class="flex justify-between items-center p-3 bg-slate-50 hover:bg-blue-50 rounded-lg border cursor-pointer transition">
+                    <div class="flex items-center gap-3">
+                        <span class="font-black text-sm w-6">${medalla}</span>
+                        <div><span class="font-black text-sm text-slate-800 block">${u.nombre}</span><span class="text-[10px] text-slate-500 uppercase font-bold">${u.rol} • ${u.club}</span></div>
+                    </div>
+                    <span class="font-black text-blue-600 text-sm">${u.xp} XP (NVL ${u.nivel})</span>
+                </div>`;
+            });
+
+            const porCalidad = directorioGlobal.filter(u => u.nota_media > 0).sort((a, b) => b.nota_media - a.nota_media).slice(0, 10);
+            if (porCalidad.length === 0) {
+                contCalidad.innerHTML = `<p class="text-xs text-slate-400">Aún no hay suficientes auditorías registradas.</p>`;
+            } else {
+                porCalidad.forEach((u, idx) => {
+                    const medalla = idx === 0 ? "🥇" : idx === 1 ? "🥈" : idx === 2 ? "🥉" : `#${idx + 1}`;
+                    contCalidad.innerHTML += `<div onclick="abrirPerfilAnalista('${u.id}')" class="flex justify-between items-center p-3 bg-slate-50 hover:bg-amber-50 rounded-lg border cursor-pointer transition">
+                        <div class="flex items-center gap-3">
+                            <span class="font-black text-sm w-6">${medalla}</span>
+                            <div><span class="font-black text-sm text-slate-800 block">${u.nombre}</span><span class="text-[10px] text-slate-500 uppercase font-bold">${u.total_informes} informes publicados</span></div>
+                        </div>
+                        <span class="font-black text-amber-500 text-sm">★ ${u.nota_media} / 5</span>
+                    </div>`;
+                });
+            }
+        }
+
+        function abrirPerfilAnalista(idUsuario) {
+            const usr = directorioGlobal.find(u => u.id === idUsuario);
+            if (!usr) return;
+            document.getElementById("mp-avatar").innerText = usr.nombre.charAt(0);
+            document.getElementById("mp-nombre").innerText = usr.nombre;
+            document.getElementById("mp-rol-club").innerText = `${usr.rol} | ${usr.club}`;
+            document.getElementById("mp-nivel").innerText = `NVL ${usr.nivel} (${usr.xp} XP)`;
+            document.getElementById("mp-total-inf").innerText = usr.total_informes;
+            document.getElementById("mp-nota").innerText = usr.nota_media > 0 ? `★ ${usr.nota_media}` : "S/N";
+            
+            const btnContacto = document.getElementById("mp-contacto");
+            if (usr.link) { btnContacto.href = usr.link; btnContacto.classList.remove("hidden"); }
+            else { btnContacto.classList.add("hidden"); }
+
+            document.getElementById("mp-insignias").innerHTML = (usr.insignias || []).map(b => `<span class="text-[10px] font-bold px-2.5 py-0.5 rounded-full ${b.color}">${b.icono} ${b.nombre}</span>`).join("");
+
+            const infAnalista = mercadoGlobal.filter(i => i.ID_Usuario === idUsuario);
+            const contInf = document.getElementById("mp-lista-informes");
+            contInf.innerHTML = "";
+            if (infAnalista.length === 0) {
+                contInf.innerHTML = `<p class="col-span-full text-xs text-slate-400 py-4">Este analista aún no tiene informes publicados en el mercado.</p>`;
+            } else {
+                infAnalista.forEach(inf => {
+                    contInf.innerHTML += `<div class="p-4 border rounded-xl bg-slate-50 flex justify-between items-center">
+                        <div>
+                            <span class="text-[10px] font-black uppercase text-blue-700">${inf.Tipo_Informe} • ${inf.Pais} Tier ${inf.Tier}</span>
+                            <h5 class="font-black text-slate-800 text-sm">${inf.Objetivo}</h5>
+                            <p class="text-xs text-slate-500">${inf.Detalle_Tecnico}</p>
+                        </div>
+                        ${generarBotonInforme(inf)}
+                    </div>`;
+                });
+            }
+            document.getElementById("modal-perfil").classList.remove("hidden");
+        }
+
+        function cerrarModalPerfil() {
+            document.getElementById("modal-perfil").classList.add("hidden");
+        }
+
+        // --- TABLÓN ---
+        async function cargarMensajesTablon() {
+            const contenedor = document.getElementById("contenedorMensajes");
+            const res = await enviarA_Google({ accion: "cargar_tablon" });
+            if (res.exito) {
+                contenedor.innerHTML = "";
+                if (res.datos.length === 0) { contenedor.innerHTML = "<p class='text-slate-400 text-center py-4 text-sm'>El tablón está vacío.</p>"; return; }
+                res.datos.forEach(msg => {
+                    contenedor.innerHTML += `<div class="bg-white p-3.5 rounded-lg shadow-sm border border-slate-100"><p class="text-xs text-blue-700 font-black">${msg.nombre} <span class="text-slate-400 font-normal ml-2">${msg.fecha}</span></p><p class="text-sm text-slate-700 mt-1">${msg.mensaje}</p></div>`;
+                });
+            }
+        }
+
+        async function publicarTablon(event) {
+            const input = document.getElementById("inputMensaje"); const mensaje = input.value.trim(); if (!mensaje) return;
+            const btn = event.currentTarget; btn.innerText = "⏳"; btn.disabled = true;
+            const res = await enviarA_Google({ accion: "guardar_mensaje", id_usuario: usuarioActual.id, nombre_usuario: usuarioActual.nombre, mensaje: mensaje });
+            if (res.exito) { input.value = ""; cargarMensajesTablon(); }
+            btn.innerText = "Publicar"; btn.disabled = false;
+        }
+
+        // --- PORTFOLIO VISUAL Y EXPORTACIÓN PDF ---
+        function renderizarVistaPortfolio() {
+            if (!usuarioActual) return;
+            const misInf = mercadoGlobal.filter(i => i.ID_Usuario === usuarioActual.id);
+            const miDirectorio = directorioGlobal.find(u => u.id === usuarioActual.id) || { insignias: [], nota_media: 0, paises: [] };
+
+            document.getElementById("pf-nombre").innerText = usuarioActual.nombre.toUpperCase();
+            document.getElementById("pf-rol-club").innerText = `${usuarioActual.rol} | ${usuarioActual.club || 'RCL Scout Network'}`;
+            document.getElementById("pf-nivel").innerText = `NIVEL ${usuarioActual.nivel}`;
+            document.getElementById("pf-xp").innerText = `${usuarioActual.xp} XP Acumulados`;
+            document.getElementById("pf-total").innerText = misInf.length;
+            document.getElementById("pf-media").innerText = miDirectorio.nota_media > 0 ? `★ ${miDirectorio.nota_media} / 5` : "S/N";
+            document.getElementById("pf-paises").innerText = (miDirectorio.paises && miDirectorio.paises.length > 0) ? miDirectorio.paises.join(", ") : "Global";
+            document.getElementById("pf-fecha-emision").innerText = "Fecha de emisión: " + new Date().toLocaleDateString('es-ES');
+
+            const total = misInf.length || 1;
+            const cScouting = misInf.filter(i => i.Tipo_Informe === "Scouting").length;
+            const cTactica = misInf.filter(i => i.Tipo_Informe === "Táctica").length;
+            const cDatos = misInf.filter(i => i.Tipo_Informe === "Datos").length;
+
+            const pctS = misInf.length > 0 ? Math.round((cScouting / total) * 100) : 0;
+            const pctT = misInf.length > 0 ? Math.round((cTactica / total) * 100) : 0;
+            const pctD = misInf.length > 0 ? Math.round((cDatos / total) * 100) : 0;
+
+            document.getElementById("pf-pct-scouting").innerText = `${pctS}% (${cScouting})`;
+            document.getElementById("pf-bar-scouting").style.width = `${pctS}%`;
+            document.getElementById("pf-pct-tactica").innerText = `${pctT}% (${cTactica})`;
+            document.getElementById("pf-bar-tactica").style.width = `${pctT}%`;
+            document.getElementById("pf-pct-datos").innerText = `${pctD}% (${cDatos})`;
+            document.getElementById("pf-bar-datos").style.width = `${pctD}%`;
+
+            let espDom = usuarioActual.rol;
+            if (cTactica > cScouting && cTactica > cDatos) espDom = "Análisis Táctico";
+            else if (cDatos > cScouting && cDatos > cTactica) espDom = "Big Data & Métricas";
+            else if (cScouting > 0) espDom = "Talent Scouting";
+            document.getElementById("pf-esp-principal").innerText = espDom;
+
+            const contIns = document.getElementById("pf-insignias");
+            if (miDirectorio.insignias && miDirectorio.insignias.length > 0) {
+                contIns.innerHTML = miDirectorio.insignias.map(b => `<span class="text-xs font-bold px-3 py-1 rounded-full ${b.color}">${b.icono} ${b.nombre}</span>`).join("");
+            } else {
+                contIns.innerHTML = `<span class="text-xs font-bold px-3 py-1 rounded-full bg-slate-200 text-slate-700">✔️ Analista Verificado RCL</span>`;
+            }
+
+            const tbody = document.getElementById("pf-tabla-informes");
+            tbody.innerHTML = "";
+            if (misInf.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-slate-400">Sube informes a la plataforma para que aparezcan en tu historial certificado.</td></tr>`;
+            } else {
+                misInf.slice().sort((a, b) => (Number(b.Nota_Media) || 0) - (Number(a.Nota_Media) || 0)).slice(0, 8).forEach(inf => {
+                    tbody.innerHTML += `<tr>
+                        <td class="p-2.5 font-black text-slate-900">${inf.Objetivo}</td>
+                        <td class="p-2.5 font-bold text-blue-700">${inf.Tipo_Informe}</td>
+                        <td class="p-2.5 text-slate-600">${inf.Detalle_Tecnico}</td>
+                        <td class="p-2.5 text-slate-500">${inf.Herramientas || '-'}</td>
+                        <td class="p-2.5 font-bold">${inf.Pais} • Tier ${inf.Tier}</td>
+                        <td class="p-2.5 text-right font-black text-amber-500">${Number(inf.Nota_Media) > 0 ? '★ ' + Number(inf.Nota_Media).toFixed(1) : 'Auditando'}</td>
+                    </tr>`;
+                });
+            }
+        }
+
+        async function descargarPortfolioPDF(ev) {
+            const btn = ev.currentTarget; const txt = btn.innerText; btn.innerText = "⏳ GENERANDO PDF HD..."; btn.disabled = true;
+            renderizarVistaPortfolio();
+            const elemento = document.getElementById("portfolio-canvas");
+            const opciones = {
+                margin: 5,
+                filename: `Portfolio_RCL_${usuarioActual.nombre.replace(/\s+/g, '_')}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
+            };
+            try {
+                await html2pdf().set(opciones).from(elemento).save();
+            } catch (e) {
+                alert("Error al exportar el PDF.");
+            } finally {
+                btn.innerText = txt; btn.disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>
